@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Меню создания АОСР</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+      form {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+      }
+      .column {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-right: 5px;
+      }
+      label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 150px;
+        margin-bottom: 15px;
+      }
+      select, input {
+        width: 200px;
+        margin-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+        <form class="form-group">
+          <div class = "column">
+            <label for="list" >Шифр проекта</label>
+            <label for="start_f">С</label>
+            <label for="finish_f">По</label>
+            <label for="excep_f">Удалить</label>
+            <br />
+            <button type="button" class="btn btn-primary" name="button_f" id="button_f">Выполнить</button>
+          </div>
+
+          <div class="column">
+              <select name="list" id="list" required>
+              <option selected disabled>Выбери раздел</option>
+              <? const list = getDropdownListArray(); ?>
+              <? list.forEach( ev => { ?>
+              <option id="<?= ev ?>"><?= ev ?></option>
+              <? }); ?>
+              </select>
+            <input type="number" name="start_f"  id="start_f"   placeholder="например: 1" required>
+            <input type="number" name="finish_f" id="finish_f"  placeholder="например: 10" required>
+            <input type="text"   name="excep_f"  id="excep_f"   placeholder="например: 3,7,8">
+            <br />
+            <button type="button" class="btn btn-secondary" onclick= "google.script.host.close();">Закрыть</button>
+          </div>
+        </form>
+      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+      <script>
+        document.getElementById("button_f").addEventListener('click',AfterClicked);
+
+        function AfterClicked(){
+          alert("В работе...");
+          var type = "avk";//тип документа для processForm
+          var name = document.getElementById("list");
+          var start = document.getElementById("start_f");
+          var finish = document.getElementById("finish_f");
+          var excep = document.getElementById("excep_f");
+          var inputData = {type:type, name: name.value, start:start.value, finish:finish.value, excep:excep.value};
+          google.script.run.processForm(inputData);
+        };
+      </script>
+  </body>
+</html>

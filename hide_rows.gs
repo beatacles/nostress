@@ -1,14 +1,12 @@
 //функция сворачивания пустых строк
-function hide_rows(name,array,start) {
-  let sh = SpreadsheetApp.getActiveSpreadsheet(); // активировать данную таблицу
-  let ss = sh.getSheetByName(name);//взять вкладку по названию, где name - это название, например "Р№"
-  let r= ss.getRange(array);//по какому массиву будем искать пустые строки, где array - это массив, например "A5:A54"
-  let data = r.getValues();//значения массива
-  ss.unhideRow(r);
-  //цикл для скрытия строк
-  let i=0;
-  while( data[i].filter(String).length != 0 ){
-    i++;
-  };
-  ss.hideRows(i+start,data.length-i);
+function hide_rows(name, array, start) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name); // получаем вкладку
+  const range = sheet.getRange(array); // получаем диапазон ячеек
+  const values = range.getValues(); // получаем значения ячеек
+  const lastIndex = values.findIndex(row => !row.join('')); // находим последнюю пустую строку
+  sheet.showRows(start, sheet.getLastRow()); // сбрасываем скрытие строк
+  if (lastIndex >= 0) {
+    const rowsToHide = values.length - lastIndex; // количество строк для скрытия
+    sheet.hideRows(lastIndex + start, rowsToHide); // скрываем строки
+  }
 };

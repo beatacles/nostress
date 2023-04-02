@@ -57,28 +57,21 @@ function modalForm_AVK(){
 function processForm(inputData) {
   console.log("Входные данные:",inputData);
   const name = inputData.name;
-  let excep = [];
-  if (inputData.excep.length !== 0) {
-    excep = inputData.excep.split(",").map(item => parseInt(item));
-  } else {
-    console.log("Исключений нет");
-  };
-  const acts = [];
-  for (let i = parseInt(inputData.start); i <= parseInt(inputData.finish); i++) {
-    acts.push(i);
-  }
+  const excep = inputData.excep.length !== 0 ? inputData.excep.split(",").map(item => parseInt(item)) : []; //проверка исключений, перевод из текста в массив чисел
+  const acts = Array.from({ length: parseInt(inputData.finish) - parseInt(inputData.start) + 1 }, (_, i) => i + parseInt(inputData.start));//проверка актво, создание массива чисел
   const filteredActs = excep.length !== 0 ? acts.filter(item => !excep.includes(item)) : acts;
   const outputData = { name, acts: filteredActs.reverse() };
   console.log("Выходные данные:",inputData);
 
-  if (inputData.type === "aosr"){
-    multiple_aosr(outputData);
-    console.log("Данные АОСР отправлены в печать");
-  } else if (inputData.type === "avk") {
-    multiple_avk(outputData);
-    console.log("Данные АВК отправлены в печать");
-  } else{
-    console.log("Ошибка определения типа документа");
+  switch (inputData.type) {
+    case "aosr":
+      multiple_aosr(outputData);
+      break;
+    case "avk":
+      multiple_avk(outputData);
+      break;
+    default:
+      console.log("Ошибка определения типа документа");
   }
 };
 

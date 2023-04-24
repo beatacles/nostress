@@ -58,10 +58,10 @@ function processForm(inputData) {
   console.log("Входные данные:",inputData);
   const name = inputData.name;
   const excep = inputData.excep.length !== 0 ? inputData.excep.split(",").map(item => parseInt(item)) : []; //проверка исключений, перевод из текста в массив чисел
-  const acts = Array.from({ length: parseInt(inputData.finish) - parseInt(inputData.start) + 1 }, (_, i) => i + parseInt(inputData.start));//проверка актво, создание массива чисел
+  const acts = Array.from({ length: parseInt(inputData.finish) - parseInt(inputData.start) + 1 }, (_, i) => i + parseInt(inputData.start));//проверка актов, создание массива чисел
   const filteredActs = excep.length !== 0 ? acts.filter(item => !excep.includes(item)) : acts;
   const outputData = { name, acts: filteredActs.reverse() };
-  console.log("Выходные данные:",inputData);
+  console.log("Выходные данные:",outputData);
 
   switch (inputData.type) {
     case "aosr":
@@ -138,15 +138,17 @@ function multiple_avk(outputData){
   let nameFolderFirstID = root.createFolder(nameFolderFirst).getId();//создание папки с нужным namefolder 1 уровень
   folderFist=DriveApp.getFolderById(nameFolderFirstID); // взяли ее по id папку 1 уровня
   
-  var folderSecond = DriveApp.getFolderById(nameFolderFirstID);
+  
   
   //Установка шифра раздела АВК
   var as = SpreadsheetApp.getActiveSpreadsheet();//активная таблица
   var ss = as.getSheetByName("АВК");//активный лист АВК
-  
+  console.log(outputData.acts.length);
+
   //Цикл создания PDF АВК + сопроводительной документации (17 сек)
-  for (i = 0; i<=outputData.acts.length-1; i++ ){
+  for (i = 0; i<outputData.acts.length; i++ ){
     //Работа с папками
+    var folderSecond = DriveApp.getFolderById(nameFolderFirstID);
     var nameFolderSecond = "АВК_" + "№"+ outputData.acts[i] +"_"+ outputData.name;
     var folderSecondID = folderSecond.createFolder(nameFolderSecond).getId();
     folderSecond = DriveApp.getFolderById(folderSecondID);//////////////////////////////////////////////////////////////в эту папку сопроводительные
@@ -166,9 +168,9 @@ function multiple_avk(outputData){
     var url = as.getRangeByName("link.url").getRichTextValues().flat().map(rt => rt.getLinkUrl()).filter(url => url !== null);
 
     //Цикл сохрания сопроводительных документов
-    for (i=0;i<url.length;i++){
-      filename = "Приложение_№"+[i]+"_"+doc[i]+".pdf"
-      upload(url[i],filename,folderSecond);
+    for (x=0;x<url.length;x++){
+      filename = "Приложение_№"+[x]+"_"+doc[x]+".pdf";
+      upload(url[x],filename,folderSecond);
     };   
   };
   SpreadsheetApp.getUi().alert("Завершено");

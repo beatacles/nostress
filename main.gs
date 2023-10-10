@@ -1,177 +1,200 @@
-/**
- * Функции запускаемые при редактировании и открытии
- */
-// Функции, запускаемые при редактировании
-function OnEdit(e){
-  hide_rows('Р№', 'A5:A54',5);
-  hide_rows('Р.ВК', 'B10:B259',10);
+///Папки
+const folderID = "19myKgNT4eWO3fvFADuJ62tFUFcBBhIfe";//id корневой папки
+const folder = DriveApp.getFolderById(folderID);//обращение по id папки
+//Переменные
+const as = SpreadsheetApp.getActiveSpreadsheet();//активная таблица
+
+function inch(value){
+  return 0.393701 * value;
 };
 
-// Функции, запускаемые при открытии
-function onOpen(){
-  createMenu();
-};
 
-/**
- * Front.Создание меню.
- * Создание модального окна для АОСР.
- * Создание модального окна для АВК.
- */
-
-//Создание меню
-function createMenu(){
-  const ui = SpreadsheetApp.getUi();
-  menu = ui.createMenu("Меню");
-  menu.addItem("Cоздать АОСР","modalForm_AOSR");
-  menu.addItem("Cоздать АВК","modalForm_AVK");
-  menu.addToUi();
-};
-
-//Создание модального окна АОСР
-function modalForm_AOSR(){
-  const modalForm = HtmlService.createTemplateFromFile("modal_aosr")
+//Создание модального окна Создать ИД
+function modal(){
+  const modalForm = HtmlService.createTemplateFromFile("modal")
   const htmlOutput = modalForm.evaluate()
   const ui = SpreadsheetApp.getUi();
-  ui.showModalDialog(htmlOutput, "Меню создания АОСР");
+  ui.showModalDialog(htmlOutput, "Меню создания ИД");
 };
 
-//Создание модального окна АВК
-function modalForm_AVK(){
-  const modalForm = HtmlService.createTemplateFromFile("modal_avk")
-  const htmlOutput = modalForm.evaluate()
-  const ui = SpreadsheetApp.getUi();
-  ui.showModalDialog(htmlOutput, "Меню создания АВК");
-};
-
-/**
- * Back.
- * Извлечение данных для выпадающего списка
- * Преобразование данных из формы
- * Создание АОСР
- * Создание реестра к АОСР
- * Создание АВК
- * Создание сопроводительной документации к АВК
- */
-
-//Преобразует данные из форм
+//Запуск по информации из формы
 function processForm(inputData) {
   console.log("Входные данные:",inputData);
-  const name = inputData.name;
-  const excep = inputData.excep.length !== 0 ? inputData.excep.split(",").map(item => parseInt(item)) : []; //проверка исключений, перевод из текста в массив чисел
-  const acts = Array.from({ length: parseInt(inputData.finish) - parseInt(inputData.start) + 1 }, (_, i) => i + parseInt(inputData.start));//проверка актов, создание массива чисел
-  const filteredActs = excep.length !== 0 ? acts.filter(item => !excep.includes(item)) : acts;
-  const outputData = { name, acts: filteredActs.reverse() };
-  console.log("Выходные данные:",outputData);
+  make_aosr(inputData);
+  make_vso(inputData);
+  make_vik(inputData);
+  make_apt(inputData);
+  make_ag(inputData);
+  make_r1(inputData);
+  make_r2(inputData);
+  make_r3(inputData);
+  make_tp(inputData);
+  make_ad(inputData);
+  SpreadsheetApp.getUi().alert("Завершено");
+}
 
-  switch (inputData.type) {
-    case "aosr":
-      multiple_aosr(outputData);
-      break;
-    case "avk":
-      multiple_avk(outputData);
-      break;
-    default:
-      console.log("Ошибка определения типа документа");
-  }
-};
-
-//Извлекает и подготавливает данные из таблицы по названию именнованного диапазона для выпадающего списка формы
-function getDropdownListArray(){
-  return SpreadsheetApp.getActiveSpreadsheet()
-    .getRangeByName("chapter")
-    .getValues()
-    .flat()
-    .filter(ev => ev !="")
-};
-
-//Запуск вывода набора АОСР+реестр
-function multiple_aosr(outputData){
-  
-  //Работа с папками
-  nameFolder = outputData.name + "_№"+ outputData.acts[outputData.acts.length - 1]+"-"+outputData.acts[0];//создаем название папки для комлпекта АОСР
-  let folderID = "1Hq5o3MsgiSXtEfrhuOBtf0hPtWSZInPs";//папка для складывания папок АОСР
-  let folder = DriveApp.getFolderById(folderID);//обращение по id папки
-  let newFolderID = folder.createFolder(nameFolder).getId();//создание папки с нужным namefolder
-  folder=DriveApp.getFolderById(newFolderID); // взяли ее по id
-
-  //Установка шифра раздела АОСР
-  var as = SpreadsheetApp.getActiveSpreadsheet();//активная таблица
+//Функци создания АОСР и реестров материалов для АОСР
+function make_aosr(inputData){
+  if (inputData.aosr == false) {return}
   var ss = as.getSheetByName("АОСР");//активный лист АОСР
   var sr = as.getSheetByName("Р№");//активный лист Реестра
-  as.getRangeByName("acts.name").setValue(outputData.name);//установили название раздела
+  const n_aosr = as.getRangeByName("n.aosr").getValue().split(",");
   
-  //Цикл создания PDF АОСР (4 сек. на один Акт)
-  for (i = 0; i<=outputData.acts.length-1; i++ ){
-    filename = "АОСР_" + outputData.name + "_№"+ outputData.acts[i];
-    as.getRangeByName("acts.number").setValue(outputData.acts[i]);
+  //Цикл создания PDF АОСР
+  for (i = 0; i<=n_aosr.length-1; i++ ){
+    filename = n_aosr[i]+"_Акт_АОСР_1";
+    as.getRangeByName("aosr").setValue(n_aosr[i]);
     SpreadsheetApp.flush();
     Utilities.sleep(100);
     exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
       [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
-      ["A4",1,6,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),[[0,37],[37,82]],[[0,20]]]]
+      ["A4",1,6,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),[[0,36],[36,82]],[[0,20]]]]
     );
-    console.log("Создал АОСР");
+    console.log("Создал АОСР "+n_aosr[i]);
   };
 
   //Цикл создания PDF Реестр к АОСР
-  for (i = 0; i<=outputData.acts.length-1; i++ ){
-    filename = "АОСР_" + outputData.name + "_№"+ outputData.acts[i]+"_Реестр";
-    as.getRangeByName("acts.reg").setValue(outputData.acts[i]);//установили номер реестра
-    hide_rows('Р№', 'A5:A54',5);
+  for (x = 0; x<=n_aosr.length-1; x++ ){
+    name = n_aosr[x]+"_Акт_АОСР_2";
+    as.getRangeByName("aosr.r").setValue(n_aosr[x]);
+    hide_rows('Р№', 'B4:B88',4);
     SpreadsheetApp.flush();
     Utilities.sleep(100);
-    exportPDFtoGDrive(folder, as.getId(),filename,[ [ sr.getSheetId().toString() ] ],
+    exportPDFtoGDrive(folder, as.getId(),name,[ [ sr.getSheetId().toString() ] ],
       [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
       ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[sr.getSheetId().toString(),null]]
     );
-    console.log("Создал АОСР Реестр")
+    console.log("Создал АОСР Реестр "+n_aosr[x]);
   };
-  
   SpreadsheetApp.getUi().alert("Завершено"); 
 };
 
-function multiple_avk(outputData){
-  //Работа с папками
-  let rootID = "1kGeSf7L1PsNVXfIOKujxKCHJWQg4BQ9c";//папка для складывания папок АВК
-  let root = DriveApp.getFolderById(rootID);//обращение по id папки
-  let nameFolderFirst = "АВК_"+outputData.name + "_№"+ outputData.acts[outputData.acts.length - 1]+"-"+outputData.acts[0];//создаем название папки 1 уровня
-  let nameFolderFirstID = root.createFolder(nameFolderFirst).getId();//создание папки с нужным namefolder 1 уровень
-  folderFist=DriveApp.getFolderById(nameFolderFirstID); // взяли ее по id папку 1 уровня
-  
-  
-  
-  //Установка шифра раздела АВК
-  var as = SpreadsheetApp.getActiveSpreadsheet();//активная таблица
-  var ss = as.getSheetByName("АВК");//активный лист АВК
-  console.log(outputData.acts.length);
+//Создать Титульный лист
+function make_tp(inputData){
+  if (inputData.tp == false) {return}
+  var ss = as.getSheetByName("Т");//активный лист
+  filename = "0_Титульный_лист"
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[inch(2),0,0,0]],[[ss.getSheetId().toString(),null]]
+    );
+};
 
-  //Цикл создания PDF АВК + сопроводительной документации (17 сек)
-  for (i = 0; i<outputData.acts.length; i++ ){
-    //Работа с папками
-    var folderSecond = DriveApp.getFolderById(nameFolderFirstID);
-    var nameFolderSecond = "АВК_" + "№"+ outputData.acts[i] +"_"+ outputData.name;
-    var folderSecondID = folderSecond.createFolder(nameFolderSecond).getId();
-    folderSecond = DriveApp.getFolderById(folderSecondID);//////////////////////////////////////////////////////////////в эту папку сопроводительные
-
-    //Создание PDF
-    filename = "АВК_№"+ outputData.acts[i]+"_"+outputData.name;
-    as.getRangeByName("acts.contr").setValue(outputData.acts[i]+"/"+outputData.name);
-    SpreadsheetApp.flush();
-    Utilities.sleep(100);
-    exportPDFtoGDrive(folderSecond, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+//Создать Реестр№1
+function make_r1(inputData){
+  if (inputData.r1 == false) {return}
+  var ss = as.getSheetByName("Р1");//активный лист
+  filename = "0_Реестр_№1"
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
       [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
       ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),null]]
     );
-    
-    //Создание массива link для ссылок на сопроводительные документы и nameLink для их названий
-    var doc = as.getRangeByName("link.doc").getValues().flat().filter(ev => ev !="");
-    var url = as.getRangeByName("link.url").getRichTextValues().flat().map(rt => rt.getLinkUrl()).filter(url => url !== null);
+};
 
-    //Цикл сохрания сопроводительных документов
-    for (x=0;x<url.length;x++){
-      filename = "Приложение_№"+[x]+"_"+doc[x]+".pdf";
-      upload(url[x],filename,folderSecond);
-    };   
+//Создать Реестр№2
+function make_r2(inputData){
+  if (inputData.r1 == false) {return}
+  var ss = as.getSheetByName("Р2");//активный лист
+  filename = "0_Реестр_№2"
+  hide_rows('Р2', 'B9:B108',9);
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),null]]
+    );
+};
+
+//Создать Реестр№3
+function make_r3(inputData){
+  if (inputData.r3 == false) {return}
+  var ss = as.getSheetByName("Р3");//активный лист
+  filename = "0_Реестр_№3";
+  hide_rows('Р3', 'B4:B103',4);
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),null]]
+    );
+};
+
+//Создать ВИК
+function make_vik(inputData){
+  if (inputData.vik == false) {return}
+  var ss = as.getSheetByName("ВИК");//активный лист
+  filename = as.getRangeByName("n.vik").getValue()+"_Акт_ВИК"
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),null]]
+    );
+};
+
+//Создать Акт о проведении промывки трубопроводов
+function make_apt(inputData){
+  if (inputData.apt == false) {return}
+  var ss = as.getSheetByName("АПТ");//активный лист
+  filename = as.getRangeByName("n.apt").getValue()+"_Акт_АПТ"
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),null]]
+    );
+};
+
+//Создать Ведомость смонтированного оборудования
+function make_vso(inputData){
+  if (inputData.vso == false) {return}
+  var ss = as.getSheetByName("ВСО");//активный лист
+  filename = "ВСО"
+  hide_rows('ВСО', 'B11:B160',11);
+  exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),null]]
+    );
+};
+
+//Создать Акт о проведении гидростатического или манометрического испытания на герметичность
+function make_ag(inputData){
+  if (inputData.ag == false) {return}
+  var ss1 = as.getSheetByName("АГ1");//активный лист
+  filename = as.getRangeByName("n.ag").getValue().split(",")
+  filename1 = filename[0]+"_Акт_АГ1"
+  exportPDFtoGDrive(folder, as.getId(),filename1,[ [ ss1.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss1.getSheetId().toString(),null]]
+    );
+  var ss2 = as.getSheetByName("АГ2");//активный лист
+  filename2 = filename[1]+"_Акт_АГ2"
+  exportPDFtoGDrive(folder, as.getId(),filename2,[ [ ss2.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,4,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss2.getSheetId().toString(),null]]
+    );
+};
+
+//Создать Акт дезинфекции
+function make_ad(inputData){
+  if (inputData.ad == false) {return}
+  var ss = as.getSheetByName("АД");//активный лист АОСР
+  var n_aosr = as.getRangeByName("n.ad");
+  filename = n_aosr[0]+"_Акт_АОСР_Акт дезинфекции";
+    as.getRangeByName("aosr").setValue(n_aosr[i]);
+    exportPDFtoGDrive(folder, as.getId(),filename,[ [ ss.getSheetId().toString() ] ],
+      [ 0, null, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, null, null, 2, 1 ],
+      ["A4",1,6,1,[0.19685039370078738,0.19685039370078738,0.5905511811023622,0.5905511811023622]],[[ss.getSheetId().toString(),[[0,36],[36,82]],[[0,20]]]]
+    );
+    console.log("Создал АОСР Акт дезинфекции");
   };
-  SpreadsheetApp.getUi().alert("Завершено");
+
+//Создать сопроводительные документы
+function make_doc_folder(){
+  const target = folder.createFolder("Сопроводительная документация").getId();
+  const targetFolder = DriveApp.getFolderById(target);
+  //Создание массива link для ссылок и имен
+    var doc = as.getRangeByName("link").getValues().flat().filter(ev => ev !="");
+    var url = as.getRangeByName("link").getRichTextValues().flat().map(rt => rt.getLinkUrl()).filter(url => url !== null);
+    var count_doc = doc.length;
+    var count_url = url.length;
+
+    //Цикл сохранения сопроводительных документов
+    for (i=0;i<url.length;i++){
+      filename = "Документ_№"+[i]+"_"+doc[i]+".pdf"
+      upload(url[i],filename,targetFolder);
+    };
+    SpreadsheetApp.getUi().alert("Загружено "+ count_url + " документов из "+ count_doc);
 };

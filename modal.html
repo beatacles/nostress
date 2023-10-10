@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Меню создания АОСР</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+      }
+
+      form {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+      }
+    </style>
+  </head>
+  <body>
+    <form class="form-group">
+      <div class="column">
+        <label>
+          <input type="checkbox" id="tp" name="title_page" value="true" />Титул </label>
+        </br>
+        <label>
+          <input type="checkbox" id="r1" name="registry_1" value="true" />Реестр №1 </label>
+        <label>
+          <input type="checkbox" id="r2" name="registry_2" value="true" />Реестр №2 </label>
+        <label>
+          <input type="checkbox" id="r3" name="registry_3" value="true" />Реестр №3 </label>
+        </br>
+        <label>
+          <input type="checkbox" id="aosr" name="aosr" value="true" />АОСР + Реестры </label>
+        </br>
+        <label>
+          <input type="checkbox" id="vso" name="list_of_equipment" value="true" />Ведомость смонтированного оборудования </label>
+        </br>
+        <label>
+          <input type="checkbox" id="vik" name="vik" value="true" />ВИК </label>
+        </br>
+        <label>
+          <input type="checkbox" id="apt" name="apt" value="true" />Акт о проведении промывки трубопроводов </label>
+        </br>
+        <label>
+          <input type="checkbox" id="ag" name="ag" value="true" />Акт о проведении испытания на герметичность </label>
+        <label>
+          <input type="checkbox" id="ad" name="ad" value="true" />Акт о дезинфекции трубопроводов</label>
+        </br>
+          <button type="button" class="btn btn-primary" name="button" id="button">Выполнить</button>
+    </form>
+      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+      <script>
+      
+      document.getElementById("button").addEventListener('click', AfterClicked);
+
+      function AfterClicked() {
+        alert("В работе...");
+        var _tp = document.getElementById("tp");
+        var tp = _tp.checked;
+        var _r1 = document.getElementById("r1");
+        var r1 = _r1.checked;
+        var _r2 = document.getElementById("r2");
+        var r2 = _r2.checked;
+        var _r3 = document.getElementById("r3");
+        var r3 = _r3.checked;
+        var _aosr = document.getElementById("aosr");
+        var aosr = _aosr.checked;
+        var _vso = document.getElementById("vso");
+        var vso = _vso.checked;
+        var _vik = document.getElementById("vik");
+        var vik = _vik.checked;
+        var _apt = document.getElementById("apt");
+        var apt = _apt.checked;
+        var _ag = document.getElementById("ag");
+        var ag = _ag.checked;
+        var _ad = document.getElementById("ad");
+        var ad = _ad.checked;
+        var inputData = {
+          tp: tp,
+          r1: r1,
+          r2: r2,
+          r3: r3,
+          aosr: aosr,
+          vso: vso,
+          vik: vik,
+          apt: apt,
+          ag: ag,
+          ad: ad,
+        };
+        google.script.run.processForm(inputData);
+      };
+    </script>
+  </body>
+</html>

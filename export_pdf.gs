@@ -1,13 +1,11 @@
-//Работа с датой
 function encodeDate( yy, mm, dd, hh, ii, ss ){
   var days=[31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   if(((yy % 4) == 0) && (((yy % 100) != 0) || ((yy % 400) == 0)))days[1]=29;
   for(var i=0; i<mm; i++) dd += days[ i ];
   yy--;
   return ((((yy * 365 + ((yy-(yy % 4)) / 4) - ((yy-(yy % 100)) / 100) + ((yy-(yy % 400)) / 400) + dd - 693594) * 24 + hh) * 60 + ii) * 60 + ss)/86400.0;
-};
+}
 
-//Открытие URL
 function openUrl( url ){
   //Browser.msgBox( '\\\"' );
   var html = HtmlService.createHtmlOutput( '<html><script>' +
@@ -24,14 +22,83 @@ function openUrl( url ){
     '<script>google.script.host.setHeight(40);google.script.host.setWidth(410)</script>' +
     '</html>').setWidth( 90 ).setHeight( 1 );
   SpreadsheetApp.getUi().showModalDialog( html, "Opening ..." );
-};
+}
 
-//Работа с уникальным ID таблицы
 function getESID(){
   return ( Math.round( Math.random() * 10000000 ) );
+}
+function exportPDF( ssID, source, options, format, breaks){
+  var dt=new Date();
+  var d=encodeDate( dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );
+  var pc=[ null, null, null, null, null, null, null, null, null, 0,
+          source,
+          10000000, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+          d,
+          null, null,
+          options,
+          format,
+          null, 0, breaks, 0 ];
+  openUrl( "https://docs.google.com/spreadsheets/d/" + ssID + "/pdf?" +
+    "esid=" + getESID() + "&" +
+    "id=" + ssID + "&" + 
+    "a=true&" +
+    "pc=" + encodeURIComponent( JSON.stringify( pc ) ) + "&" +
+    "gf=[]&" +
+    "lds=[]" );
+}
+
+function myExportPDF(){
+  var as = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = as.getActiveSheet();
+  exportPDF(as.getId(), // Идентификатор таблицы
+    [ 
+      [ sheet.getSheetId().toString(), 
+       0,                             // начальная граница по вертикали
+       82,                           // конечная граница по вертикали
+       0,                             // начальная граница по горизонтали
+       20                              // конечная граница по горизонтали
+      ] // 
+    ],
+    [ // options
+      0, /* Не показывать заметки (Hide notes) */
+      null,
+      1, /* Показывать линии сетки ( Show grid ) */
+      0, /* Не показывать номера страниц ( Hide page number ) */
+      0, /* Не показывать название книги ( Hide spreadsheet title ) */
+      0, /* Не показывать название листа ( Hide sheet title ) */
+      0, /* Не показывать текущую дату ( Hide current date ) */
+      0, /* Не показывать текущее время ( Hide current time ) */
+      1, /* Повторять закрепленные строки ( Repeat fixed rows ) */
+      1, /* Повторять закрепленные столбцы ( Repeat fixed columns ) */
+      1, /* Порядок страниц вниз, затем вверх  ( Page order down then up ) */
+      1,
+      null,
+      null,
+      1, /* Выравнивание по левому краю ( Left align ) */
+      1 /* Выравнивание по верхнему краю (Top align ) */
+    ],
+    [ // format
+      "A4", /* Формат листа A4 ( A4 sheet format ) */
+      1, /* Ориентация страницы вертикальная ( Page orientation vertical ) */ 
+      6, /* Выровнять по разрывам страниц ( Align to page breaks ) */
+      1,
+      [
+        0.275591,    // Отступ сверху
+        0.275591,    // Отступ снизу
+        0.551181,     // Отступ слева
+        0.551181      // Отступ справа
+      ]
+    ],
+    [ // breaks
+      [
+        sheet.getSheetId().toString(),
+        [ [ 0, 36 ] ] // 36 строка разрыва
+      ]
+
+    ]
+  );
 };
 
-//Работа с папками
 function getFolder( path ){
   var folder = null;
   var parents = DriveApp.getFileById( SpreadsheetApp.getActiveSpreadsheet().getId() ).getParents();
@@ -57,28 +124,6 @@ function getFolder( path ){
   return folder;
 };
 
-//Основная функция вывода pdf
-function exportPDF( ssID, source, options, format, breaks){
-  var dt=new Date();
-  var d=encodeDate( dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );
-  var pc=[ null, null, null, null, null, null, null, null, null, 0,
-          source,
-          10000000, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-          d,
-          null, null,
-          options,
-          format,
-          null, 0, breaks, 0 ];
-  openUrl( "https://docs.google.com/spreadsheets/d/" + ssID + "/pdf?" +
-    "esid=" + getESID() + "&" +
-    "id=" + ssID + "&" + 
-    "a=true&" +
-    "pc=" + encodeURIComponent( JSON.stringify( pc ) ) + "&" +
-    "gf=[]&" +
-    "lds=[]" );
-};
-
-//Обычная функция вывода pdf с сохранением на GDrive
 function exportPDFtoGDrive( folder, ssID, filename, source, options, format, breaks ){
   var dt = new Date();
   var d = encodeDate( dt.getFullYear(), dt.getMonth(), dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds() );

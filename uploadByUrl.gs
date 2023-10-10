@@ -1,10 +1,10 @@
 //Оркестрация загрузки файлов
-function upload(url,filename,folderSecond){
+function upload(url,filename,folder){
   const flag = isDrive(url);
   if (flag === true){
-    uploadFilesFromDrive(url,filename,folderSecond);
+    uploadFilesFromDrive(url,filename,folder);
   } else {
-    uploadFilesFromOther(url,filename,folderSecond);
+    uploadFilesFromOther(url,filename,folder);
   }
 };
 
@@ -16,11 +16,11 @@ function isDrive(url) {
 };
 
 //Загрузка с google drive
-function uploadFilesFromDrive(url,filename,folderSecond){
+function uploadFilesFromDrive(url,filename,folder){
   const fileID = getIdFrom(url);
   const getFile = DriveApp.getFileById(fileID);
   const blob = getFile.getBlob().setName(filename).getAs('application/pdf');
-  const file = folderSecond.createFile(blob);
+  const file = folder.createFile(blob);
   file.setDescription(`Оригинал документа: ${url}`);
 };
 
@@ -41,10 +41,10 @@ function getIdFrom(url) {
  };
 
 //Загрузка со сторонних сайтов
-function uploadFilesFromOther(url,filename,folderSecond) {
+function uploadFilesFromOther(url,filename,folder) {
   const response =  UrlFetchApp.fetch(url);
   const blob = response.getBlob();
-  const file = folderSecond.createFile(blob);
+  const file = folder.createFile(blob);
   file.setName(filename);
   file.setDescription(`Оригинал документа: ${url}`);
 };

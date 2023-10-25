@@ -41,10 +41,18 @@ function getIdFrom(url) {
  };
 
 //Загрузка со сторонних сайтов
-function uploadFilesFromOther(url,filename,folder) {
+function uploadFilesFromOther(url,filename,targetFolder) {
   const response =  UrlFetchApp.fetch(url);
-  const blob = response.getBlob();
-  const file = folder.createFile(blob);
-  file.setName(filename);
-  file.setDescription(`Оригинал документа: ${url}`);
+  let blob
+  try{
+    blob = response.getBlob().setName(filename);
+    blob.getAs('application/pdf');
+  } catch (e) {
+    let newFilename = filename.replace(".pdf", ".jpg");
+    blob = response.getBlob().setName(newFilename);
+    blob.getAs('image/jpeg');
+  } finally {
+    const file = targetFolder.createFile(blob);
+    file.setDescription(`Оригинал документа: ${url}`);
+  }
 };

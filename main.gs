@@ -183,7 +183,8 @@ function make_ad(inputData){
 
 //Создать сопроводительные документы
 function make_doc_folder(){
-  const target = folder.createFolder("Сопроводительная документация").getId();
+  const objectName = as.getName() + ". СД";
+  const target = folder.createFolder(objectName).getId();
   const targetFolder = DriveApp.getFolderById(target);
   //Создание массива link для ссылок и имен
     var doc = as.getRangeByName("link").getValues().flat().filter(ev => ev !="");
